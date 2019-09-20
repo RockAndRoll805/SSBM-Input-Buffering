@@ -1,0 +1,213 @@
+8037750c ac_ButtonPresses_ConvertRawInput
+
+0x803779b8 at the end of convert input, store
+the input in a stack in an empty memory space
+
+check player state 
+//start of per char action state table 0x803c12e0
+//start of shared action state table 0x803c2800
+
+0x80c6b970 seems to be memory address for 
+player 1's animation state
+
+0x804c1fac port 1 digital data
+0x804c1fc4 port 1 analog data
+
+6 mem address I will be using for queue are:
+0x80001800
+0x80001804
+	    08
+	    0c
+	    10
+	    14
+first available adr after q is 0x80001818
+
+b 0xffc89e60 #branch from controller update
+4BC89E60
+
+for(int x=10; x<0; x=x-4){
+	store at word with offset 4
+	subtract 4 from address
+}
+#code for updating queue
+lis r14, 0x8000
+ori r14, r14, 0x1810
+li r16, 0x4
+li r17, 0x14
+lwz r15, 0(r14) #branch to here with loop
+stw r15, 4(r14)
+subf r14, r16, r14
+subf r17, r16, r17
+cmpwi r17, 0
+bne -20
+
+#code for storing controller input
+#lwz destination offset(source)
+#stw source offset(destination)
+#subf source, smaller, bigger 
+lis r14, 0x804c
+ori r14, r14, 0x1fac
+lwz r15, 0(r14)
+lis r16, 0x8000
+ori r16, r16, 0x1800
+stw r15, 0(r16) #stores controller input 
+# last two lines required when 
+##branching back to controller update
+mtlr r0 #7C0803A6
+blr		#4E800020
+
+#ground buffer function
+lis r14, 0x8000
+ori r14, r14, 0x1800 #beginning of input queue
+li r16, 0x4
+li r17, 0x0
+li r18, 0xC00
+lwz r15, 0(r14) #branch to here with loop
+and r15, r15, r18 #check for jump input
+add r14, r16, r14 #traverse memory addresses
+add r17, r16, r17 #increase loop
+cmpwi r15, 0
+bne 20
+cmpwi r17, 0x14
+bne -28
+mflr r0 #if all else fails return back to wait
+b 0x8008a34c
+b 0x800cb4e0 #goes to kneebend
+#0x8008A348 needs to branch to ground buffer
+
+Buffer priority:
+Jump > special > smash > normal > stick input
+Input data for digital (0x804c1fac)
+0x00 00 00 10	Z
+0x00 00 00 20	R
+0x00 00 00 40	L
+0x00 00 01 00	A
+0x00 00 02 00	B
+0x00 00 04 00	X
+0x00 00 08 00	Y
+0x00 01 00 00	UP
+0x00 02 00 00	DOWN
+0x00 04 00 00	LEFT
+0x00 08 00 00	RIGHT
+0x00 10 00 00	CUP
+0x00 20 00 00	CDOWN
+0x00 40 00 00	CRIGHT
+0x00 80 00 00	CLEFT
+
+Input data for analog (0x804c1fc4)
+0x00 50 00 00	UP
+0x00 b0 00 00	DOWN
+0xb0 00 00 00	LEFT
+0x50 00 00 00	RIGHT
+
+SHORTHOP NOTES
+0x80c6baa8 is P1 jumpsquat frames
+Bowser	41000000 (8 frames) 0001 000|0
+Ganon	40c00000 (6 frames) 0000 110|0
+DK		40a00000 (5 frames)      101|0
+Luigi	40800000 (4 frames)      100|0
+Fox		40400000 (3 frames)
+
+#code for getting shorthop frames
+##inject it at 0x800cb180
+lis r14, 0x80C6
+ori r14, r14, 0xBAA8
+lwz r15, 0(r14)
+srw r15, r15, 0x15
+li r14, 0x7F
+and r15, r15, r14
+cmpwi r15, 3 #need to check if <3
+bgt 0x8
+li r15, 3
+#now need to check if player was holding
+##jump for r15 amount of frames
+##and then branch to 0x800cb184 for shorthop
+##and branch to 0x800cb194 for fullhop
+lis r17, 0x0001
+ori r17, r17, 0xC00
+lis r14, 0x8000
+ori r14, r14, 0x1800
+li r18, 0x4
+mulli r15, r15, 0x4 #4*jumpsquat, loop counter
+lwz r16, 0(r14)
+and r17, r17, r16 #AND queue value
+add r14, r14, r18 #increase mem offset
+subf r15, r18, r15 #decrement
+cmpwi r15, 0
+bne -20
+fmuls f2, f1, f0 #orig instruction at overwite
+cmpwi r17, 0
+beq 0x8
+b 0x800cb194
+b 0x800cb184
+
+it is possible to force inputs in at the end
+of controller input function but there is
+still 4 frames of delay
+
+try looking into 0x800d6904 for down
+0x800d69a0 for up
+0x80096590 for side
+At the memory address 0x800d6904 it loads
+the value of the ground special function
+address into the link register for branching
+
+I believe p1 internal ID is at 0x80c6b964
+There appears to be another address at
+0x80c6bef4 that also holds the same value
+(This address only contains popo, not nana)
+
+how it will meed to be implemented:
+load player offset from address
+multiply offset by 4
+determine if up, down, or side special
+add offset to address of determination
+branch to the sum
+
+**Grounded specials function pointer locations**
+side special addresses
+0x803c13e8 mario
+
+neutral special addresses
+0x803c167c mario
+
+down special addresses
+0x803c1700 mario
+0x803c1744 luigi 
+
+up special addresses
+0x803c1784 mario
+0x803c1788 fox
+0x803c178c captain falcon
+0x803c1790 dk
+0x803c1794 kirby
+0x803c1798 bowser
+0x803c179c link
+0x803c17a0 sheik
+0x803c17a4 ness
+0x803c17a8 peach
+0x803c17ac popo
+		b0 nana?
+0x803c17b4 pikachu
+0x803c17b8 samus
+0x803c17bc yoshi
+0x803c17c0 jigglypuff
+0x803c17c4 mewtwo
+0x803c17c8 luigi
+0x803c17cc marth
+0x803c17d0 zelda
+0x803c17d4 yink
+0x803c17d8 doc
+0x803c17dc falco
+0x803c17e0 pichu
+0x803c17e4 G&W
+0x803c17e8 ganon
+0x803c17ec roy
+
+0x800e1a54 grounded up special for mario/doc
+0x800e1ab0 aerial up sepcial for mario
+0x800e1a54 grounded side special for luigi?
+0x8011d72c grounded up special for peach
+0x80143fc8 grounded up special for luigi
+0x801445f0 grounded down special for luigi
+0x80135a30 grounded up special for bowserc
