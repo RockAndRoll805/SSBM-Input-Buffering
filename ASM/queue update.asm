@@ -1,6 +1,7 @@
 #This code is inserted at the end of the
 #controller update function (0x803779b8)
 
+#code for updating queue
 lis r14, 0x8000
 ori r14, r14, 0x1810
 li r16, 0x4
@@ -22,7 +23,8 @@ lwz r15, 0(r14)
 lis r16, 0x8000
 ori r16, r16, 0x1800
 stw r15, 0(r16) #stores controller input 
+
 # last two lines required when 
 ##branching back to controller update
-mtlr r0 #7C0803A6
-blr		#4E800020
+mtlr r0
+blr
