@@ -21,7 +21,8 @@ lis r14, 0x803c
 ori r14, r14, 0x167c
 add r14, r14, r18
 lwz r15, 0(r14)			#load n-special location
-b r15
+mtlr r15
+blr
 cmpwi r16, 0x1			#up-----------
 bne 28
 lis r14, 0x803c
