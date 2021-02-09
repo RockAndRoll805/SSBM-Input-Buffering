@@ -1,13 +1,16 @@
 #This code is inserted at the end of the
-#controller update function (0x803779b8)
+#controller update function (0x803779bc)
 
-#code for updating queue
+li r18, 0x0				# for all 4 players we are going to make their queues
+mulli r19, r18, 0x20	# branch to here with second loop
+
 lis r14, 0x8000
-ori r14, r14, 0x1810
-li r16, 0x4
-li r17, 0x14
-lwz r15, 0(r14) #branch to here with loop
-stw r15, 4(r14)
+ori r14, r14, 0x1818
+add r14, r14, r19
+li r16, 0x4	
+li r17, 0x1c
+lwz r15, 0(r14)			# branch to here with loop
+stw r15, 4(r14)			# move everything in the queue over
 subf r14, r16, r14
 subf r17, r16, r17
 cmpwi r17, 0
@@ -17,14 +20,17 @@ bne -20
 #lwz destination offset(source)
 #stw source offset(destination)
 #subf source, smaller, bigger 
-lis r14, 0x804c
-ori r14, r14, 0x1fac
-lwz r15, 0(r14)
-lis r16, 0x8000
-ori r16, r16, 0x1800
-stw r15, 0(r16) #stores controller input 
+lis r16, 0x804c
+ori r16, r16, 0x1fac
+mulli r19, r18, 0x44
+add r16, r16, r19
 
-# last two lines required when 
-##branching back to controller update
-mtlr r0
-blr
+lwz r15, 0(r16)			# load input
+addi r14, r14, 0x4
+stw r15, 0(r14)			# stores controller input 
+
+addi r18, r18, 0x1
+cmpwi r18, 0x4
+bne -0x54
+
+blr		#4E800020
