@@ -1,4 +1,4 @@
-# queue a player's queue
+# clear a player's queue
 #  currently unused
 
 mfspr r20, 8
