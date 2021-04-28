@@ -1,15 +1,12 @@
-# static overwrite at 0x800caf0c
+# static overwrite at 0x800caf14
 
-li r16, 0x400
+nop						# there is a line of code that checks if the player meant to roll
+nop						# nop'ing it out because it is unnecessary 
+nop
+lis r16, 0x1
+ori r16, r16, 0xC00
 mfspr r19, 8
-bl <queue_search>
-mtspr 8, r19
-cmpwi r17, 0
-bne 0x1C
-
-li r16, 0x800
-mfspr r19, 8
-bl <queue_search>
+bl <queue_search_any>
 mtspr 8, r19
 cmpwi r17, 0
 beq 0x28
