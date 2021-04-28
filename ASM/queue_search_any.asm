@@ -1,5 +1,6 @@
 # To use this function, load the value you want to find into r16
 # The result will be the amount of times the entry appears in the queue in r17
+# The entry can match any of the values to be counted
 
 # r18 holds character entity data pointer address
 # r14 holds address of character entity data
@@ -29,8 +30,8 @@ add r14, r14, r15		# go to corresponding queue
 lis r15, 0x0
 lwz r18, 0(r14)			# branch to here for loop
 and r18, r18, r16
-cmpw r18, r16			# check to see if we have value at queue address
-bne 0x8
+cmpwi r18, 0x0			# check to see if we have value at queue address
+beq 0x8
 addi r17, r17, 0x1		# increment occurence
 addi r14, r14, 0x4		# increment queue address
 addi r15, r15, 0x1		# increment loop counter
