@@ -3,8 +3,8 @@
 nop						# there is a line of code that checks if the player meant to roll
 nop						# nop'ing it out because it is unnecessary 
 nop
-lis r16, 0x1
-ori r16, r16, 0xC00
+nop
+li r16, 0xC00
 mfspr r19, 8
 bl <queue_search_any>
 mtspr 8, r19
