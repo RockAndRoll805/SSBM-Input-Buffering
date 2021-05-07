@@ -1,3 +1,4 @@
+# inject at 0x0x800D5D74
 # get rid of the L and R inputs on the player's input queue
 
 mfspr r20, 8
